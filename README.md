@@ -1,6 +1,6 @@
 # Sistem za upravljanje skladišča (Kanban)
 
-Programska rešitev za vodenje skladiščnega poslovanja po metodologiji Kanban. Sistem sestavljata spletna administrativna plošča (Flask) in namizni klient (Tkinter) za skladiščnike.
+Programska rešitev za vodenje skladiščnega poslovanja po metodologiji Kanban. Sistem je sestavljen iz spletne administrativne aplikacije (Flask) ter namiznega klienta (Tkinter), namenjenega skladiščnim delavcem za operativno delo.
 
 ## Uporabljene tehnologije
 
@@ -8,9 +8,9 @@ Programska rešitev za vodenje skladiščnega poslovanja po metodologiji Kanban.
 * **Podatkovna baza:** MySQL (XAMPP/WAMP)
 * **Frontend (Splet):** HTML5, Bootstrap 5, Jinja2, FontAwesome (ikone).
 * **Frontend (Namizje):** Tkinter, Ttkbootstrap, Requests (HTTP klici), Pillow (obdelava slik).
-* **Orodja:** ReportLab (generiranje PDF), QRCode
-* **Arhitektura:** REST API (JSON komunikacija med klientom in strežnikom).
-
+* **Orodja:** ReportLab (generiranje PDF), qrcode knjižnica
+* **Arhitektura:** Odjemalec–strežnik (client–server) z REST API komunikacijo (JSON) med klientom in strežnikom.
+  
 ## Namestitev in zagon
 
 ### 1. Priprava podatkovne baze
