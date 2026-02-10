@@ -4,11 +4,12 @@ Programska rešitev za vodenje skladiščnega poslovanja po metodologiji Kanban.
 
 ## Uporabljene tehnologije
 
-* **Backend:** Python (Flask, SQLAlchemy, PyMySQL)
+* **Backend:** Python (Flask, SQLAlchemy, PyMySQL), Flask-Login (avtentikacija), Flask-CORS, Waitress (produkcijski WSGI strežnik).
 * **Podatkovna baza:** MySQL (XAMPP/WAMP)
-* **Frontend (Splet):** HTML5, Bootstrap 5, Jinja2
-* **Frontend (Namizje):** Tkinter, Ttkbootstrap
+* **Frontend (Splet):** HTML5, Bootstrap 5, Jinja2, FontAwesome (ikone).
+* **Frontend (Namizje):** Tkinter, Ttkbootstrap, Requests (HTTP klici), Pillow (obdelava slik).
 * **Orodja:** ReportLab (generiranje PDF), QRCode
+* **Arhitektura:** REST API (JSON komunikacija med klientom in strežnikom).
 
 ## Namestitev in zagon
 
