@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <title>Magacin Admin</title>
+    <link href="https://bootswatch.com/5/zephyr/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        .nav-link.active { border-bottom: 3px solid #3498db !important; }
+        .card { transition: 0.2s; } .card:hover { transform: translateY(-2px); }
+        .btn-icon { cursor: pointer; }
+    </style>
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4 shadow-sm">
+    <div class="container-fluid">
+        <span class="navbar-brand fw-bold"><i class="fa-solid fa-warehouse"></i> MAGACIN MASTER</span>
+        <div class="d-flex align-items-center text-white">
+            <span class="me-3"><i class="fa-solid fa-user-shield"></i> {{ user.username }}</span>
+            <button class="btn btn-sm btn-light text-primary fw-bold me-2" onclick="otvoriModalMojaSifra()">
+                <i class="fa-solid fa-key"></i> Šifra
+            </button>
+            <a href="/logout" class="btn btn-sm btn-danger fw-bold"><i class="fa-solid fa-right-from-bracket"></i> Odjava</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid px-4">
+    <ul class="nav nav-tabs border-0 mb-3" id="myTab" role="tablist">
+        <li class="nav-item"><button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#kanban">📊 KANBAN TABLA</button></li>
+        <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#artikli">📦 ARTIKLI</button></li>
+        <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#radnici">👥 RADNICI</button></li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="kanban">
+            <div class="row g-3">
+                <div class="col-md-4"><div class="card h-100 bg-light border-0 shadow-sm">
+                    <div class="card-header bg-warning text-white fw-bold"><i class="fa-regular fa-clock"></i> ZAHTEVI ({{ pending|length }})</div>
+                    <div class="card-body">
+                        {% for n in pending %}
+                        <div id="card-{{ n.id }}" class="card mb-2 border-start border-5 border-warning shadow-sm">
+                            <div class="card-body p-2">
+                                <strong>{{ n.artikal.naziv }}</strong> ({{ n.kolicina }})<br>
+                                <small class="text-muted"><i class="fa-solid fa-user"></i> {{ n.radnik }}</small>
+                                <div class="mt-2 d-flex gap-2">
+                                    <button onclick="pozoviApi({{ n.id }}, 'odobri', 'card-{{ n.id }}')" class="btn btn-success btn-sm flex-grow-1"><i class="fa-solid fa-check"></i></button>
+                                    <button onclick="pozoviApi({{ n.id }}, 'odbij', 'card-{{ n.id }}')" class="btn btn-outline-danger btn-sm"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+                        </div>{% else %}<p class="text-center text-muted mt-3">Nema novih zahteva</p>{% endfor %}
+                    </div>
+                </div></div>
+
+                <div class="col-md-4"><div class="card h-100 bg-light border-0 shadow-sm">
+                    <div class="card-header bg-primary text-white fw-bold"><i class="fa-solid fa-truck"></i> NA PUTU ({{ ordered|length }})</div>
+                    <div class="card-body">
+                        {% for n in ordered %}
+                        <div id="card-{{ n.id }}" class="card mb-2 border-start border-5 border-primary shadow-sm">
+                            <div class="card-body p-2">
+                                <strong>{{ n.artikal.naziv }}</strong> ({{ n.kolicina }})
+                                <button onclick="pozoviApi({{ n.id }}, 'stiglo', 'card-{{ n.id }}')" class="btn btn-warning btn-sm w-100 mt-2 fw-bold"><i class="fa-solid fa-box-open"></i> STIGLO</button>
+                            </div>
+                        </div>{% endfor %}
+                    </div>
+                </div></div>
+
+                <div class="col-md-4"><div class="card h-100 bg-light border-0 shadow-sm">
+                    <div class="card-header bg-success text-white fw-bold"><i class="fa-solid fa-history"></i> ISTORIJA</div>
+                    <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                        {% for n in history %}
+                        <div id="hist-{{ n.id }}" class="card mb-2 p-2 border-0 shadow-sm d-flex flex-row justify-content-between align-items-center">
+                            <small>
+                                <b>{{ n.artikal.naziv }}</b> ({{ n.kolicina }})<br>
+                                <span class="badge {{ 'bg-success' if n.status=='delivered' else 'bg-danger' }}">{{ n.status }}</span> 
+                                <span class="text-muted ms-2">{{ n.datum_kreiranja.strftime('%d.%m %H:%M') }}</span>
+                            </small>
+                            <button onclick="obrisiNarudzbu({{ n.id }}, 'hist-{{ n.id }}')" class="btn btn-sm btn-light text-danger" title="Obriši zapis"><i class="fa-solid fa-trash"></i></button>
+                        </div>{% endfor %}
+                    </div>
+                </div></div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="artikli">
+            <div class="card shadow-sm border-0"><div class="card-body">
+                <button class="btn btn-primary mb-3" onclick="otvoriModalZaDodavanje()"><i class="fa-solid fa-plus"></i> Dodaj Artikal</button>
+                
+                <table class="table table-hover align-middle">
+                    <thead class="table-light"><tr><th>Šifra</th><th>Naziv</th><th>Lokacija</th><th>Stanje</th><th>Akcija</th></tr></thead>
+                    <tbody>
+                        {% for a in artikli %}
+                        <tr id="row-art-{{ a.sifra }}">
+                            <td class="fw-bold">{{ a.sifra }}</td><td>{{ a.naziv }}</td>
+                            <td><span class="badge bg-secondary">{{ a.lokacija_rel.oznaka }}</span></td>
+                            <td><span class="fw-bold {{ 'text-danger' if a.stanje < 10 else 'text-success' }}">{{ a.stanje }}</span> <i onclick="korigujStanje('{{ a.sifra }}')" class="fa-solid fa-pencil text-muted ms-2 btn-icon"></i></td>
+                            <td>
+                                <button onclick="otvoriModalZaIzmenu('{{ a.sifra }}')" class="btn btn-sm btn-outline-primary me-1" title="Izmeni podatke"><i class="fa-solid fa-pen-to-square"></i></button>
+                                
+                                <a href="/admin/pdf/{{ a.sifra }}" target="_blank" class="btn btn-sm btn-outline-dark me-1"><i class="fa-solid fa-print"></i></a>
+                                <button onclick="obrisiEntitet('artikal', '{{ a.sifra }}', 'row-art-{{ a.sifra }}')" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                            </td>
+                        </tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div></div>
+        </div>
+
+        <div class="tab-pane fade" id="radnici">
+            <div class="card shadow-sm border-0" style="max-width: 900px"><div class="card-body">
+                <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#modalRadnik"><i class="fa-solid fa-user-plus"></i> Novi Radnik</button>
+                <table class="table align-middle">
+                    <thead class="table-light"><tr><th>Username</th><th>Uloga</th><th>Akcija</th></tr></thead>
+                    <tbody>
+                        {% for u in radnici %}
+                        <tr id="row-usr-{{ u.id }}">
+                            <td class="fw-bold"><i class="fa-solid fa-user me-2 text-secondary"></i> {{ u.username }}</td>
+                            <td><span class="badge rounded-pill {{ 'bg-danger' if u.role=='admin' else 'bg-info' }}">{{ u.role }}</span></td>
+                            <td>
+                                <button onclick="resetujSifru({{ u.id }}, '{{ u.username }}')" class="btn btn-sm btn-warning me-2"><i class="fa-solid fa-key"></i> Reset Šifre</button>
+                                {% if u.id != user.id %}
+                                <button onclick="obrisiEntitet('radnika', {{ u.id }}, 'row-usr-{{ u.id }}')" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                                {% endif %}
+                            </td>
+                        </tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalArtikal"><div class="modal-dialog"><form class="modal-content" id="formArtikal" method="POST">
+    <div class="modal-header bg-primary text-white"><h5 class="modal-title" id="naslovModala">Artikal</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <label class="form-label">Šifra</label>
+        <input name="sifra" id="inpSifra" class="form-control mb-2" required>
+        
+        <label class="form-label">Naziv</label>
+        <input name="naziv" id="inpNaziv" class="form-control mb-2" required>
+        
+        <label class="form-label">Dobavljač</label>
+        <input name="dobavljac" id="inpDobavljac" class="form-control mb-2">
+        
+        <label class="form-label">Lokacija</label>
+        <input name="lokacija" id="inpLokacija" class="form-control mb-2">
+        
+        <label class="form-label">Tip zone</label>
+        <select name="tip" id="inpTip" class="form-control">
+            <option value="blue">Plava Zona (Standard)</option>
+            <option value="red">Crvena Zona (Kritično)</option>
+        </select>
+        
+        <div id="divStanje">
+            <label class="form-label">Početno Stanje</label>
+            <input name="stanje" type="number" class="form-control mb-2" value="0">
+        </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-primary w-100">Sačuvaj</button></div>
+</form></div></div>
+
+<div class="modal fade" id="modalRadnik"><div class="modal-dialog"><form class="modal-content" action="/admin/dodaj_radnika" method="POST">
+    <div class="modal-header bg-primary text-white"><h5 class="modal-title">Novi Radnik</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <input name="username" class="form-control mb-2" placeholder="Username" required>
+        <input name="password" type="password" class="form-control mb-2" placeholder="Password" required>
+        <select name="role" class="form-control"><option value="radnik">Radnik</option><option value="admin">Admin</option></select>
+    </div>
+    <div class="modal-footer"><button class="btn btn-primary w-100">Kreiraj</button></div>
+</form></div></div>
+
+<script>
+    
+
+    var myModal = new bootstrap.Modal(document.getElementById('modalArtikal'));
+
+    function otvoriModalZaDodavanje() {
+        
+        document.getElementById("formArtikal").reset();
+        document.getElementById("formArtikal").action = "/admin/dodaj_artikal"; // Stara ruta
+        document.getElementById("naslovModala").innerText = "Novi Artikal";
+        
+        
+        document.getElementById("inpSifra").readOnly = false;
+        document.getElementById("divStanje").style.display = "block"; 
+        
+        myModal.show();
+    }
+
+    function otvoriModalZaIzmenu(sifra) {
+        
+        fetch('/api/artikal/' + sifra)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                let a = data.data;
+                
+                
+                document.getElementById("inpSifra").value = a.sifra;
+                document.getElementById("inpNaziv").value = a.naziv;
+                document.getElementById("inpDobavljac").value = a.dobavljac;
+                document.getElementById("inpLokacija").value = a.lokacija;
+                document.getElementById("inpTip").value = a.tip;
+                
+                
+                document.getElementById("formArtikal").action = "/admin/izmeni_artikal"; 
+                document.getElementById("naslovModala").innerText = "Izmeni Artikal: " + a.naziv;
+                
+                
+                document.getElementById("inpSifra").readOnly = true;
+                
+                
+                document.getElementById("divStanje").style.display = "none";
+                
+                myModal.show();
+            } else {
+                alert("Greška pri učitavanju podataka.");
+            }
+        });
+    }
+
+    
+    function pozoviApi(id, akcija, elId) {
+        fetch('/api/admin/akcija', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id: id, akcija: akcija})})
+        .then(r=>r.json()).then(d=>{ if(d.status==='success') { document.getElementById(elId).remove(); if(akcija!=='odbij') location.reload(); }});
+    }
+    
+    function obrisiEntitet(tip, id, elId) {
+        if(!confirm("Trajno obrisati?")) return;
+        fetch(`/api/admin/obrisi_${tip}/${id}`, {method: 'DELETE'}).then(r=>r.json()).then(d=>{ if(d.status==='success') document.getElementById(elId).remove(); });
+    }
+
+    function obrisiNarudzbu(id, elId) {
+        if(!confirm("Obriši iz istorije?")) return;
+        fetch(`/api/admin/obrisi_narudzbu/${id}`, {method: 'DELETE'}).then(r=>r.json()).then(d=>{ if(d.status==='success') document.getElementById(elId).remove(); });
+    }
+    
+    function korigujStanje(sifra) {
+        let n = prompt("Novo stanje:"); if(n) fetch('/api/admin/koriguj_stanje', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({sifra:sifra, stanje:n})}).then(()=>location.reload());
+    }
+
+    function resetujSifru(id, ime) {
+        let nova = prompt(`Unesi NOVU šifru za radnika ${ime}:`);
+        if(nova) fetch('/api/admin/reset_radnika', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id: id, nova_sifra: nova})}).then(r=>r.json()).then(d=>alert(d.message));
+    }
+
+    function otvoriModalMojaSifra() {
+        let nova = prompt("Unesi svoju NOVU šifru:");
+        if(nova) fetch('/api/admin/promeni_moju_sifru', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({nova_sifra: nova})}).then(r=>r.json()).then(d => { alert(d.message); });
+    }
+</script>
+</body>
+</html>

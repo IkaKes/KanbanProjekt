@@ -1,0 +1,12 @@
+Flask==3.1.2
+flask_cors==6.0.2
+Flask_Login==0.6.3
+flask_sqlalchemy==3.1.1
+Pillow==12.1.0
+PyMySQL
+qrcode==8.2
+reportlab==4.4.9
+Requests==2.32.5
+ttkbootstrap==1.20.1
+waitress==3.0.2
+Werkzeug==3.1.5
